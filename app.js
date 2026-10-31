@@ -37,8 +37,9 @@ const msgOf=t=>`${t.who||'你好'}，交给你一个任务：\n【任务】${t.t
 const urgeOf=t=>`${t.who||'你好'}，${t.task}${Date.now()>t.due?`已经过了截止时间（${fmt(t.due)}）`:`截止时间是${fmt(t.due)}`}，现在进度怎么样？有困难请及时告诉我。`;
 $('#save').onclick=()=>{const t={id:Date.now(),who:$('#f_who').value.trim(),task:$('#f_task').value.trim(),std:$('#f_std').value.trim(),due:+new Date($('#f_due').value),rem:+new Date($('#f_rem').value),done:0,replies:[],created:Date.now(),reminded:0,urges:0};
  if(!t.task||!t.due)return toast('任务和截止时间不能为空');tasks.unshift(t);save();$('#msg').textContent=msgOf(t);$('#msgbox').style.display='block';$('#draft').style.display='none';$('#say').value='';render();askNotify()};
-async function copy(txt){try{await navigator.clipboard.writeText(txt)}catch(e){const a=document.createElement('textarea');a.value=txt;document.body.appendChild(a);a.select();document.execCommand('copy');a.remove()}toast('已复制，去微信粘贴发送')}
-$('#copy').onclick=()=>copy($('#msg').textContent);
+async function copy(txt){try{await navigator.clipboard.writeText(txt)}catch(e){const a=document.createElement('textarea');a.value=txt;document.body.appendChild(a);a.select();document.execCommand('copy');a.remove()}toast('已复制，去微信粘贴')}
+async function share(txt){if(navigator.share){try{await navigator.share({text:txt});return}catch(e){if(e&&e.name==='AbortError')return}}copy(txt)}
+$('#copy').onclick=()=>share($('#msg').textContent);$('#copy2').onclick=()=>copy($('#msg').textContent);
 // speech
 const SR=window.SpeechRecognition||window.webkitSpeechRecognition;let rec=null;
 if(SR){rec=new SR();rec.lang='zh-CN';rec.interimResults=true;rec.continuous=false;
@@ -54,14 +55,14 @@ function render(){const L=$('#list');$('#cnt').textContent=`共 ${tasks.length} 
  L.innerHTML=tasks.length?'':'<div class="hint">还没有任务，去「派活」说一句吧</div>';
  tasks.forEach(t=>{const s=status(t),e=document.createElement('div');e.className='card';
   e.innerHTML=`<div class="t"><div></div><span class="chip ${CH[s][0]}">${CH[s][1]}</span></div><div class="m"></div><div class="rp"></div>
-  <button class="btn s sm" data-a="done">${t.done?'改回进行中':'标记完成'}</button><button class="btn s sm" data-a="reply">贴员工回复</button><button class="btn s sm" data-a="urge">催办</button><button class="btn s sm" data-a="msg">派活消息</button><button class="btn s sm" data-a="del" style="color:#b91c1c">删除</button>`;
+  <button class="btn s sm" data-a="done">${t.done?'改回进行中':'标记完成'}</button><button class="btn s sm" data-a="reply">贴员工回复</button><button class="btn s sm" data-a="urge">催办·发到微信</button><button class="btn s sm" data-a="msg">派活·发到微信</button><button class="btn s sm" data-a="cp">复制</button><button class="btn s sm" data-a="del" style="color:#b91c1c">删除</button>`;
   e.querySelector('.t div').textContent=t.task;
   e.querySelector('.m').textContent=`${t.who||'未指定'} · 截止 ${fmt(t.due)}`+(t.done?` · 完成于 ${fmt(t.done)}`:` · ⏰ ${fmt(t.rem)} 提醒`)+(t.urges?` · 已催办 ${t.urges} 次`:'');
   t.replies.forEach(r=>{const p=document.createElement('div');p.className='m';p.style.color='#334155';p.textContent=`💬 “${r.text}” (${fmt(r.at)})`;e.querySelector('.rp').appendChild(p)});
   e.onclick=ev=>{const a=ev.target.dataset.a;if(!a)return;
    if(a=='done')t.done=t.done?0:Date.now();
    if(a=='reply'){const r=prompt('粘贴员工在微信里的回复：');if(r&&r.trim())t.replies.push({text:r.trim(),at:Date.now()});if(r&&/完成|做完|搞定|已提交|已发|好了/.test(r)&&!/没|未|还没/.test(r)&&confirm('看起来已完成，标记为完成？'))t.done=Date.now()}
-   if(a=='urge'){t.urges++;copy(urgeOf(t))}if(a=='msg')copy(msgOf(t));
+   if(a=='urge'){t.urges++;share(urgeOf(t))}if(a=='msg')share(msgOf(t));if(a=='cp')copy(msgOf(t));
    if(a=='del'&&confirm('删除这个任务？'))tasks=tasks.filter(x=>x!==t);save();render()};L.appendChild(e)});
  summary()}
 function summary(){const n=new Date(),c={done:0,doing:0,late:0};tasks.forEach(t=>c[status(t)]++);
@@ -70,13 +71,13 @@ function summary(){const n=new Date(),c={done:0,doing:0,late:0};tasks.forEach(t=
  let txt=!tasks.length?'还没有任务。':late.length?`需要你关注：${late.map(t=>`${t.who}的「${t.task}」已逾期`).join('；')}。`:'今天整体顺利，没有逾期任务。';
  if(doneT.length)txt+=` 今天完成了 ${doneT.length} 项：${doneT.map(t=>t.task).join('、')}。`;if(soon.length)txt+=` 24小时内到期 ${soon.length} 项：${soon.map(t=>`${t.who}「${t.task}」`).join('、')}。`;
  const S=$('#sum');S.innerHTML=`<div class="stats"><div class="st" style="background:#dcfce7;color:#15803d"><div>${c.done}</div><span>已完成</span></div><div class="st" style="background:#dbeafe;color:#1d4ed8"><div>${c.doing}</div><span>进行中</span></div><div class="st" style="background:#fee2e2;color:#b91c1c"><div>${c.late}</div><span>已逾期</span></div></div>
- <div class="card" style="background:#eef2ff;border-color:#c7d2fe;font-size:14px;line-height:1.6">✨ <span id="sumtxt"></span></div><button class="btn s" id="cpsum">复制汇总</button><div style="font-weight:700;margin:14px 0 8px">员工回复</div>`;
- $('#sumtxt').textContent=txt;$('#cpsum').onclick=()=>copy(`【${n.getMonth()+1}月${n.getDate()}日 工作汇总】完成${c.done} 进行中${c.doing} 逾期${c.late}\n`+txt);
+ <div class="card" style="background:#eef2ff;border-color:#c7d2fe;font-size:14px;line-height:1.6">✨ <span id="sumtxt"></span></div><button class="btn" id="cpsum">汇总发到微信</button><button class="btn s sm" id="cpsum2">复制</button><div style="font-weight:700;margin:14px 0 8px">员工回复</div>`;
+ $('#sumtxt').textContent=txt;const st=`【${n.getMonth()+1}月${n.getDate()}日 工作汇总】完成${c.done} 进行中${c.doing} 逾期${c.late}\n`+txt;$('#cpsum').onclick=()=>share(st);$('#cpsum2').onclick=()=>copy(st);
  tasks.filter(t=>t.replies.length).forEach(t=>{const s=status(t),e=document.createElement('div');e.className='card';e.innerHTML=`<div class="t"><div></div><span class="chip ${CH[s][0]}">${CH[s][1]}</span></div><div class="m" style="font-size:13px;color:#334155"></div>`;
   e.querySelector('.t div').textContent=`${t.who} · ${t.task}`;e.querySelector('.m').textContent=`“${t.replies.at(-1).text}”`;S.appendChild(e)})}
 // reminders
 function askNotify(){if('Notification'in window&&Notification.permission=='default')Notification.requestPermission()}
-function tick(){let ch=0;tasks.forEach(t=>{if(!t.done&&!t.reminded&&Date.now()>=t.rem){t.reminded=1;ch=1;const b=`${t.who}「${t.task}」截止 ${fmt(t.due)}，点「催办」复制提醒消息`;
+function tick(){let ch=0;tasks.forEach(t=>{if(!t.done&&!t.reminded&&Date.now()>=t.rem){t.reminded=1;ch=1;const b=`${t.who}「${t.task}」截止 ${fmt(t.due)}，点「催办」发到微信`;
  toast('⏰ 到点提醒：'+b);try{navigator.vibrate&&navigator.vibrate(300)}catch(e){}if('Notification'in window&&Notification.permission=='granted')try{new Notification('AI 派活助手 · 到点提醒',{body:b})}catch(e){}}});if(ch)save();render()}
 setInterval(tick,20000);
 document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>{document.querySelectorAll('nav button,.pg').forEach(x=>x.classList.remove('a'));b.classList.add('a');$('#p'+b.dataset.p).classList.add('a');render()});
