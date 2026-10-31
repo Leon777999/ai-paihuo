@@ -1,0 +1,34 @@
+<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes"><title>AI 派活助手</title><style>
+*{box-sizing:border-box}body{margin:0;font-family:-apple-system,"PingFang SC","Noto Sans CJK SC",sans-serif;background:#fff;color:#0f172a;padding-bottom:80px}
+.top{padding:16px 20px 10px;font-size:22px;font-weight:700}.top small{display:block;font-size:13px;color:#64748b;font-weight:400}
+.c{padding:0 16px}.card{background:#f8fafc;border:1px solid #e2e8f0;border-radius:18px;padding:14px;margin-bottom:12px}
+.mic{width:120px;height:120px;border-radius:50%;background:linear-gradient(135deg,#6366f1,#8b5cf6);margin:24px auto;display:flex;align-items:center;justify-content:center;font-size:52px;color:#fff;border:0;box-shadow:0 0 0 14px #6366f122,0 0 0 28px #6366f111;-webkit-user-select:none;user-select:none;touch-action:none}
+.mic.on{animation:p 1s infinite}@keyframes p{50%{box-shadow:0 0 0 20px #6366f133,0 0 0 40px #6366f118}}
+.hint{text-align:center;color:#64748b;font-size:13px;margin-bottom:12px}
+textarea,input{width:100%;font:inherit;font-size:16px;border:1px solid #cbd5e1;border-radius:12px;padding:10px;background:#fff}
+.kv{display:flex;align-items:center;gap:8px;padding:5px 0;font-size:14px}.kv b{color:#64748b;font-weight:400;width:56px;flex:none}
+.btn{display:block;width:100%;background:#4f46e5;color:#fff;border:0;border-radius:14px;padding:13px;font-size:16px;font-weight:700;margin-top:10px}
+.btn.s{background:#e0e7ff;color:#3730a3}.sm{width:auto;display:inline-block;padding:7px 12px;font-size:13px;margin:6px 6px 0 0}
+.chip{font-size:12px;padding:3px 9px;border-radius:99px;font-weight:600}.g{background:#dcfce7;color:#15803d}.b{background:#dbeafe;color:#1d4ed8}.r{background:#fee2e2;color:#b91c1c}
+.t{display:flex;justify-content:space-between;align-items:center;font-size:15px;font-weight:600}.m{font-size:12px;color:#64748b;margin-top:6px}
+.stats{display:flex;gap:10px;margin-bottom:12px}.st{flex:1;border-radius:16px;padding:12px;text-align:center}.st div{font-size:30px;font-weight:800}.st span{font-size:12px}
+nav{position:fixed;bottom:0;left:0;right:0;display:flex;background:#fff;border-top:1px solid #e2e8f0;padding-bottom:env(safe-area-inset-bottom)}
+nav button{flex:1;border:0;background:none;padding:12px 0;font-size:14px;color:#64748b}nav button.a{color:#4f46e5;font-weight:700}
+.pg{display:none}.pg.a{display:block}pre{white-space:pre-wrap;font:inherit;font-size:14px;margin:0}
+#toast{position:fixed;top:16px;left:16px;right:16px;background:#111827;color:#fff;padding:12px;border-radius:12px;display:none;z-index:9}
+</style></head><body>
+<div id="toast"></div>
+<section class="pg a" id="p0"><div class="top">语音派活<small>铧宸科技 · 按住说话，AI 帮你整理成任务</small></div><div class="c">
+<button class="mic" id="mic">🎤</button><div class="hint" id="hint">按住说话 · 松开识别（或在下面打字）</div>
+<textarea id="say" rows="2" placeholder="例：让小王周五前把报价做完"></textarea><button class="btn s" id="parse">整理成任务</button>
+<div class="card" id="draft" style="display:none;margin-top:12px"><div style="font-size:13px;color:#6366f1;font-weight:700;margin-bottom:6px">✨ 已生成任务（可修改）</div>
+<div class="kv"><b>负责人</b><input id="f_who"></div><div class="kv"><b>任务</b><input id="f_task"></div><div class="kv"><b>标准</b><input id="f_std"></div>
+<div class="kv"><b>截止</b><input id="f_due" type="datetime-local"></div><div class="kv"><b>提醒</b><input id="f_rem" type="datetime-local"></div>
+<button class="btn" id="save">保存并生成微信消息</button></div>
+<div class="card" id="msgbox" style="display:none"><div class="m" style="margin:0 0 6px">复制后到微信发给员工：</div><pre id="msg"></pre><button class="btn" id="copy">复制消息</button></div>
+</div></section>
+<section class="pg" id="p1"><div class="top">任务列表<small id="cnt"></small></div><div class="c" id="list"></div></section>
+<section class="pg" id="p2"><div class="top">每日汇总<small id="today"></small></div><div class="c" id="sum"></div></section>
+<nav><button class="a" data-p="0">🎤 派活</button><button data-p="1">📋 任务</button><button data-p="2">📊 汇总</button></nav>
+<script src="app.js"></script></body></html>
