@@ -16,19 +16,23 @@ textarea,input{width:100%;font:inherit;font-size:16px;border:1px solid #cbd5e1;b
 nav{position:fixed;bottom:0;left:0;right:0;display:flex;background:#fff;border-top:1px solid #e2e8f0;padding-bottom:env(safe-area-inset-bottom)}
 nav button{flex:1;border:0;background:none;padding:12px 0;font-size:14px;color:#64748b}nav button.a{color:#4f46e5;font-weight:700}
 .pg{display:none}.pg.a{display:block}pre{white-space:pre-wrap;font:inherit;font-size:14px;margin:0}
-#toast{position:fixed;top:16px;left:16px;right:16px;background:#111827;color:#fff;padding:12px;border-radius:12px;display:none;z-index:9}
+#restore{font-size:13px;margin:8px 0}details label{display:block;font-size:13px;margin:12px 0 4px}.btn:disabled{opacity:.6}#toast{position:fixed;top:16px;left:16px;right:16px;background:#111827;color:#fff;padding:12px;border-radius:12px;display:none;z-index:9}
 </style></head><body>
 <div id="toast"></div>
-<section class="pg a" id="p0"><div class="top">语音派活<small>铧宸科技 · 按住说话，AI 帮你整理成任务</small></div><div class="c">
-<button class="mic" id="mic">🎤</button><div class="hint" id="hint">按住说话 · 松开识别（或在下面打字）</div>
-<textarea id="say" rows="2" placeholder="例：让小王周五前把报价做完"></textarea><button class="btn s" id="parse">整理成任务</button>
-<div class="card" id="draft" style="display:none;margin-top:12px"><div style="font-size:13px;color:#6366f1;font-weight:700;margin-bottom:6px">✨ 已生成任务（可修改）</div>
-<div class="kv"><b>负责人</b><input id="f_who"></div><div class="kv"><b>任务</b><input id="f_task"></div><div class="kv"><b>标准</b><input id="f_std"></div>
-<div class="kv"><b>截止</b><input id="f_due" type="datetime-local"></div><div class="kv"><b>提醒</b><input id="f_rem" type="datetime-local"></div>
-<button class="btn" id="save">保存并生成微信消息</button></div>
-<div class="card" id="msgbox" style="display:none"><div class="m" style="margin:0 0 6px">点下面按钮，选微信再选员工：</div><pre id="msg"></pre><button class="btn" id="copy">发到微信</button> <button class="btn s sm" id="copy2">复制</button></div>
+<section class="pg a" id="p0"><div class="top">语音派活<small>铧宸科技 · 说一句话，核对后保存任务</small></div><div class="c">
+<div class="card" style="font-size:13px;line-height:1.6">默认使用免费本地规则。所有草稿请核对。<br><b>页面关闭或休眠后，网页提醒无法保证。</b>重要任务请导出日历，导入后检查提醒设置。<br>分享只生成文字，需你在微信等应用中自行发送。</div>
+<button class="mic" id="mic" aria-label="开始或结束语音输入" aria-pressed="false">🎤</button><div class="hint" id="hint">点击开始 · 再点结束；也可打字或使用键盘语音输入</div>
+<textarea aria-label="派活内容" id="say" rows="2" placeholder="例：让小王周五前把报价做完"></textarea><button class="btn s" id="parse">整理成任务</button>
+<details class="card" style="margin-top:12px"><summary>可选：连接私人 AI 服务</summary><p class="m">仅填写你信任的服务。任务文字将发送给该服务及其模型提供商。语音识别也可能由浏览器的在线服务处理。</p><label for="api_url">AI 接口地址（HTTPS，完整 /api/parse 路径）</label><input id="api_url" type="url" placeholder="https://你的服务/api/parse"><label for="api_token">私人访问口令（至少32字符，仅保留在本页内存）</label><input id="api_token" type="password" autocomplete="off"><button class="btn s" id="config_save">应用配置</button><p class="m">刷新后需重新填写口令；清空地址可切回本地规则。</p></details>
+<div class="card" id="draft" style="display:none;margin-top:12px"><div style="font-size:13px;color:#6366f1;font-weight:700;margin-bottom:6px">任务草稿（核对后保存）</div>
+<p class="m" id="parse_note" role="status"></p>
+<div class="kv"><b>负责人</b><input aria-label="负责人" id="f_who"></div><div class="kv"><b>任务</b><input aria-label="任务" id="f_task"></div><div class="kv"><b>标准</b><input aria-label="标准" id="f_std"></div>
+<div class="kv"><b>截止</b><input aria-label="截止时间" id="f_due" type="datetime-local"></div><div class="kv"><b>提醒</b><input aria-label="提醒时间" id="f_rem" type="datetime-local"></div>
+<button class="btn" id="save">保存并生成派活消息</button></div>
+<div class="card" id="msgbox" style="display:none"><div class="m" style="margin:0 0 6px">自行选择分享目标并完成发送；无法确认对方是否收到：</div><pre id="msg"></pre><button class="btn" id="copy">分享消息</button> <button class="btn s sm" id="copy2">复制</button></div>
 </div></section>
-<section class="pg" id="p1"><div class="top">任务列表<small id="cnt"></small></div><div class="c" id="list"></div></section>
+<section class="pg" id="p1"><div class="top">任务列表<small id="cnt"></small></div><div class="c"><p id="storage_note" class="m" role="status"></p><p class="m">本机时间：<span id="zone"></span>。导出的日历与这里的完成、删除操作不会自动同步。</p><button class="btn s sm" id="notify">允许页面通知</button><button class="btn s sm" id="backup">导出数据备份</button><label class="btn s sm" for="restore">导入数据备份</label><input id="restore" type="file" accept=".json,application/json"><div id="list"></div></div></section>
 <section class="pg" id="p2"><div class="top">每日汇总<small id="today"></small></div><div class="c" id="sum"></div></section>
 <nav><button class="a" data-p="0">🎤 派活</button><button data-p="1">📋 任务</button><button data-p="2">📊 汇总</button></nav>
-<script src="app.js"></script></body></html>
+<script src="core.js"></script><script src="app.js"></script><script>document.getElementById("zone").textContent=Intl.DateTimeFormat().resolvedOptions().timeZone;</script></body></html>
+
