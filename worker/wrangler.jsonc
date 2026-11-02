@@ -1,0 +1,16 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "ai-paihuo-parse",
+  "main": "index.mjs",
+  "compatibility_date": "2026-11-01",
+  "ai": { "binding": "AI" },
+  "vars": { "ALLOWED_ORIGIN": "https://leon777999.github.io" },
+  "ratelimits": [
+    {
+      "name": "PARSE_LIMITER",
+      "namespace_id": "77799901",
+      "simple": { "limit": 6, "period": 60 }
+    }
+  ],
+  "observability": { "enabled": false }
+}
